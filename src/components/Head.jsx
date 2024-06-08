@@ -3,6 +3,7 @@ import { toggleMenu } from "../utils/appSlice";
 import { useEffect, useState } from "react";
 import { YOUTUBE_SEARCH_API } from "../utils/constants";
 import { cacheResults } from "../utils/searchSlice";
+import jsonp from "../utils/jsonp";
 
 const Head = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,14 +30,20 @@ const Head = () => {
   }, [searchQuery]);
 
   const getSearchSuggestions = async () => {
-    const data = await fetch(YOUTUBE_SEARCH_API + searchQuery);
-    const json = await data.json();
-    setSuggestions(json[1]);
-    dispatch(
-      cacheResults({
-        [searchQuery]: json[1],
-      })
-    );
+    try {
+      const response = await jsonp(
+        YOUTUBE_SEARCH_API + searchQuery,
+        "callback"
+      );
+      setSuggestions(response[1]);
+      dispatch(
+        cacheResults({
+          [searchQuery]: response[1],
+        })
+      );
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+    }
   };
   return (
     <div className="grid grid-flow-col p-5 m-2 shadow-lg">
